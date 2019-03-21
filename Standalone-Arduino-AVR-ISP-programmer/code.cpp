@@ -196,7 +196,7 @@ byte * readImagePage (byte *hextext, uint16_t pageaddr, uint8_t pagesize, byte *
 {
   
   uint16_t len;
-  uint8_t page_idx = 0;
+ 
   byte *beginning = hextext;
   
   byte b, cksum = 0;
@@ -207,9 +207,10 @@ byte * readImagePage (byte *hextext, uint16_t pageaddr, uint8_t pagesize, byte *
   for (uint8_t i=0; i<pagesize; i++)
     page[i] = 0xFF;
 
+  byte *linestart = hextext;
   while (1) {
     uint16_t lineaddr;
-
+    linestart = hextext;
     // Strip leading whitespace
     byte c;
     do {
@@ -239,7 +240,7 @@ byte * readImagePage (byte *hextext, uint16_t pageaddr, uint8_t pagesize, byte *
     lineaddr = (lineaddr << 8) + b;
     
     if (lineaddr >= (pageaddr + pagesize)) {
-      return beginning;
+      return linestart;
     }
 
     b = hexton(pgm_read_byte(hextext++)); // record type 
@@ -251,28 +252,44 @@ byte * readImagePage (byte *hextext, uint16_t pageaddr, uint8_t pagesize, byte *
      hextext = nullptr;
      break;
     } 
+    if(b != 0x00) {
+      // some other record, ignore
+      do {
+        c = pgm_read_byte(hextext++);
+      } while (c != '\n');
+      continue;
+    }
 #if VERBOSE
     Serial.print("\nLine address =  0x"); Serial.println(lineaddr, HEX);      
     Serial.print("Page address =  0x"); Serial.println(pageaddr, HEX);      
 #endif
     for (byte i=0; i < len; i++) {
-      // read 'n' bytes
       b = hexton(pgm_read_byte(hextext++));
       b = (b<<4) + hexton(pgm_read_byte(hextext++));
       
       cksum += b;
+
+      // Calculate  the address of the byte we're currently reading 
+      uint16_t real_addr = lineaddr + i;
+      if(real_addr > pageaddr + pagesize) {
+        Serial.println("page is full!");
+        return linestart;
+      }
+
+      if(real_addr < pageaddr) {
+//        Serial.print(".");
+        continue;
+      }
+
+      // offset = offset in current page
+      int16_t offset = lineaddr+i - pageaddr;
+      
 #if VERBOSE
       Serial.print(b, HEX);
       Serial.write(' ');
 #endif
 
-      page[page_idx] = b;
-      page_idx++;
-
-      if (page_idx > pagesize) {
-          error("Too much code");
-	  break;
-      }
+      page[offset] = b;
     }
     b = hexton(pgm_read_byte(hextext++));  // chxsum
     b = (b<<4) + hexton(pgm_read_byte(hextext++));
@@ -289,9 +306,7 @@ byte * readImagePage (byte *hextext, uint16_t pageaddr, uint8_t pagesize, byte *
     Serial.println();
     Serial.println(page_idx, DEC);
 #endif
-    if (page_idx == pagesize) 
-      break;
-  }
+      }
 #if VERBOSE
   Serial.print("\n  Total bytes read: ");
   Serial.println(page_idx, DEC);
@@ -389,6 +404,14 @@ boolean verifyImage (byte *hextext)  {
      // end record!
      break;
     } 
+
+    if(b != 0x00) {
+      // skip the line
+      do {
+        c = pgm_read_byte(hextext++);
+      } while (c != '\n');
+      continue;
+    }
     
     for (byte i=0; i < len; i++) {
       // read 'n' bytes
@@ -402,6 +425,7 @@ boolean verifyImage (byte *hextext)  {
       Serial.print(":0x");
       Serial.print(b, HEX);
       Serial.write(" ? ");
+      
 #endif
 
       SPI.beginTransaction(flash_spisettings);
@@ -490,4 +514,3 @@ uint16_t spi_transaction (uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
   */
   return 0xFFFFFF & (((uint32_t)n<<16)+(m<<8) + r);
 }
-
