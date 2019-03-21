@@ -1,32 +1,3 @@
-#include "optiLoader.h"
-
-const image_t PROGMEM image_328 = {
-    // Sketch name, only used for serial printing
-    {"optiboot_atmega328.hex"},
-    // Chip name, only used for serial printing
-    {"atmega328P"},
-    // Signature bytes for 328P
-    0x950F,
-    // Programming fuses, written before writing to flash. Fuses set to
-    // zero are untouched.
-    {0x3F, 0xFF, 0xDE, 0x05}, // {lock, low, high, extended}
-    // Normal fuses, written after writing to flash (but before
-    // verifying). Fuses set to zero are untouched.
-    {0x0F, 0x0, 0x0, 0x0}, // {lock, low, high, extended}
-    // Fuse verify mask. Any bits set to zero in these values are
-    // ignored while verifying the fuses after writing them. All (and
-    // only) bits that are unused for this atmega chip should be zero
-    // here.
-    {0x3F, 0xFF, 0xFF, 0x07}, // {lock, low, high, extended}
-    // size of chip flash in bytes
-    32768,
-    // size in bytes of flash page
-    128,
-    // The actual image to flash. This can be copy-pasted as-is from a
-    // .hex file. If you do, replace all lines below starting with a
-    // colon, but make sure to keep the start and end markers {R"( and
-    // )"} in place.
-    {R"(
 :100000000C9462000C948A000C948A000C948A0070
 :100010000C948A000C948A000C948A000C948A0038
 :100020000C948A000C948A000C948A000C948A0028
@@ -183,16 +154,3 @@ const image_t PROGMEM image_328 = {
 :027FFE00000879
 :0400000300007E007B
 :00000001FF
-    )"}
-};
-
-
-/*
- * Table of defined images. The first one matching the chip's signature
- * is used.
- */
-const image_t *images[] = {
-  &image_328,
-};
-
-uint8_t NUMIMAGES = sizeof(images)/sizeof(images[0]);
