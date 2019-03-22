@@ -12,7 +12,7 @@
 const int PIN_ON=8;
 
 // PIN_STATUS controls the status LED on the board.
-const int PIN_STATUS=LED_BUILTIN;
+const int PIN_STATUS=20;
 
 bool waitingForSpace;
 
