@@ -286,8 +286,3 @@ boolean target_poweroff ()
   digitalWrite(LED_PROGMODE, LOW);
   return true;
 }
-
-
-
-
-

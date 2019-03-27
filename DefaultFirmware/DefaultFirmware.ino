@@ -16,6 +16,8 @@ const int PIN_STATUS=20;
 
 bool waitingForSpace;
 
+unsigned long lastBlink = 0;
+
 void setup() {
   waitingForSpace = false;
   
@@ -27,7 +29,7 @@ void setup() {
   digitalWrite(PIN_ON, HIGH);
 
   // Wait for avrdude commands
-  Serial.begin(38400);
+  Serial.begin(38400); 
 }
 
 
@@ -37,6 +39,10 @@ void loop() {
     switch(c) {
       case '0':
         waitingForSpace = true;
+        break;
+      case 'i':
+        Serial.write('?');
+        waitingForSpace = false;
         break;
       case ' ':
         if(waitingForSpace) {
@@ -50,6 +56,11 @@ void loop() {
         waitingForSpace = false;    
     }
   }
-  // Blink the LED to show the user that the bootloader init firmware is running
-  digitalWrite(PIN_STATUS, 1 & (millis() >> 5));
+  if(millis() - lastBlink > 500) {
+    // Blink the LED to show the user that the bootloader init firmware is running
+    digitalWrite(PIN_STATUS, HIGH);
+    delayMicroseconds(150);
+    digitalWrite(PIN_STATUS, LOW);
+    lastBlink = millis();
+  }
 }
