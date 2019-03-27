@@ -49,7 +49,7 @@ void loop() {
           digitalWrite(PIN_STATUS, HIGH);
           typedef void (*do_reboot_t)(void);
           const do_reboot_t do_reboot = (do_reboot_t)((FLASHEND - 511) >> 1);
-          cli(); TCCR0A = TCCR1A = TCCR2A = 0; // make sure interrupts are off and timers are reset.
+          cli(); MCUSR = TCCR0A = TCCR1A = TCCR2A = 0; // make sure interrupts are off and timers are reset.
           do_reboot();
         }
       default:
